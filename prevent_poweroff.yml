@@ -1,0 +1,37 @@
+---
+- name: Prevent system poweroff
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Backup and override poweroff
+      shell: mv /sbin/poweroff /sbin/poweroff.bak && ln -s /bin/true /sbin/poweroff
+      args:
+        creates: /sbin/poweroff.bak
+
+    - name: Backup and override halt
+      shell: mv /sbin/halt /sbin/halt.bak && ln -s /bin/true /sbin/halt
+      args:
+        creates: /sbin/halt.bak
+
+    - name: Backup and disable shutdown
+      shell: |
+        mv /sbin/shutdown /sbin/shutdown.bak
+        cp /sbin/shutdown.bak /sbin/shutdown
+        chmod -x /sbin/shutdown
+      args:
+        creates: /sbin/shutdown.bak
+
+    - name: Mask poweroff/halt/shutdown targets
+      systemd:
+        name: "{{ item }}"
+        masked: yes
+      loop:
+        - poweroff.target
+        - halt.target
+        - shutdown.target
+
+    - name: Unmask reboot target
+      systemd:
+        name: reboot.target
+        masked: no

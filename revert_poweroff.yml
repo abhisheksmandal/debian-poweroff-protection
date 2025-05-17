@@ -1,0 +1,29 @@
+---
+- name: Revert poweroff protection
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Restore poweroff binary
+      shell: rm -f /sbin/poweroff && mv /sbin/poweroff.bak /sbin/poweroff
+      args:
+        removes: /sbin/poweroff
+
+    - name: Restore halt binary
+      shell: rm -f /sbin/halt && mv /sbin/halt.bak /sbin/halt
+      args:
+        removes: /sbin/halt
+
+    - name: Restore shutdown binary
+      shell: rm -f /sbin/shutdown && mv /sbin/shutdown.bak /sbin/shutdown && chmod +x /sbin/shutdown
+      args:
+        removes: /sbin/shutdown
+
+    - name: Unmask systemd shutdown targets
+      systemd:
+        name: "{{ item }}"
+        masked: no
+      loop:
+        - poweroff.target
+        - halt.target
+        - shutdown.target
