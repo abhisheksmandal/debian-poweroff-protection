@@ -1,16 +1,31 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-sudo rm -f /sbin/poweroff
-sudo mv /sbin/poweroff.bak /sbin/poweroff
+restore_cmd() {
+    local cmd=$1
+    local path="/sbin/$cmd"
+    if [ -L "$path" ] && [ -e "$path.bak" ]; then
+        sudo rm -f "$path"
+        sudo mv "$path.bak" "$path"
+        echo "$cmd restored."
+    else
+        echo "Warning: $cmd not restored (might not have been disabled)."
+    fi
+}
 
-sudo rm -f /sbin/halt
-sudo mv /sbin/halt.bak /sbin/halt
+sudo -v
 
-sudo rm -f /sbin/shutdown
-sudo mv /sbin/shutdown.bak /sbin/shutdown
-sudo chmod +x /sbin/shutdown
+restore_cmd poweroff
+restore_cmd halt
+
+if [ -e /sbin/shutdown.bak ]; then
+    sudo mv /sbin/shutdown.bak /sbin/shutdown
+    sudo chmod +x /sbin/shutdown
+    echo "shutdown restored."
+else
+    echo "shutdown.bak not found. Nothing to restore."
+fi
 
 sudo systemctl unmask poweroff.target halt.target shutdown.target
 
-echo "Poweroff restored."
+echo "✅ Poweroff, halt, shutdown restored."
