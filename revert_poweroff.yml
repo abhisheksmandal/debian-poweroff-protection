@@ -8,16 +8,22 @@
       shell: rm -f /sbin/poweroff && mv /sbin/poweroff.bak /sbin/poweroff
       args:
         removes: /sbin/poweroff
+      changed_when: true
 
     - name: Restore halt binary
       shell: rm -f /sbin/halt && mv /sbin/halt.bak /sbin/halt
       args:
         removes: /sbin/halt
+      changed_when: true
 
     - name: Restore shutdown binary
-      shell: rm -f /sbin/shutdown && mv /sbin/shutdown.bak /sbin/shutdown && chmod +x /sbin/shutdown
+      shell: |
+        rm -f /sbin/shutdown
+        mv /sbin/shutdown.bak /sbin/shutdown
+        chmod +x /sbin/shutdown
       args:
         removes: /sbin/shutdown
+      changed_when: true
 
     - name: Unmask systemd shutdown targets
       systemd:
@@ -27,3 +33,5 @@
         - poweroff.target
         - halt.target
         - shutdown.target
+      loop_control:
+        label: "{{ item }}"
